@@ -3,86 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Basic Grammar Quiz - SALVO GROUP</title>
+
+<title>🔥 SALVO QUIZ PRO</title>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
 
 <style>
 body{
-font-family:'Segoe UI';
-background:linear-gradient(135deg,#6d28d9,#a855f7);
+font-family: 'Segoe UI', sans-serif;
+background: linear-gradient(135deg,#6c2bd9,#9333ea);
 margin:0;
-color:#fff;
+padding:20px;
 }
 
-.container{
-max-width:900px;
-margin:40px auto;
-background:#fff;
-color:#111;
+.quiz{
+max-width:800px;
+margin:auto;
+background:white;
 border-radius:20px;
+box-shadow:0 25px 60px rgba(0,0,0,0.3);
 overflow:hidden;
-box-shadow:0 20px 50px rgba(0,0,0,0.3);
 }
 
 .header{
-background:linear-gradient(135deg,#7c3aed,#c084fc);
-padding:25px;
-text-align:center;
+background: linear-gradient(135deg,#7c3aed,#a855f7);
 color:white;
+padding:20px;
+text-align:center;
 }
 
-.score-panel{
-display:flex;
-justify-content:space-between;
-padding:15px;
-background:#f3e8ff;
-font-weight:bold;
+.progress{
+font-size:14px;
+opacity:0.9;
 }
 
-.question{
+.content{
 padding:25px;
-font-size:22px;
-font-weight:600;
 }
 
 .option{
-margin:10px 20px;
-padding:15px;
+padding:14px;
+margin:10px 0;
 border-radius:12px;
-border:2px solid #ddd;
+border:1px solid #ddd;
 cursor:pointer;
 transition:0.2s;
 }
 
 .option:hover{
-background:#f5edff;
-transform:translateX(5px);
+transform:scale(1.02);
+background:#f5f3ff;
 }
 
-.correct{
-background:#d1fae5;
-border-color:#10b981;
-}
-
-.wrong{
-background:#fee2e2;
-border-color:#ef4444;
-animation:shake .3s;
-}
-
-@keyframes shake{
-0%{transform:translateX(0)}
-25%{transform:translateX(-4px)}
-50%{transform:translateX(4px)}
-75%{transform:translateX(-4px)}
-100%{transform:translateX(0)}
-}
+.correct{background:#dcfce7;}
+.wrong{background:#fee2e2;}
 
 .explanation{
-background:#fef9c3;
-margin:15px 20px;
-padding:15px;
+margin-top:15px;
+padding:12px;
+background:#fff7ed;
 border-left:5px solid orange;
 border-radius:10px;
 }
@@ -90,191 +69,148 @@ border-radius:10px;
 .nav{
 display:flex;
 justify-content:space-between;
-padding:20px;
+padding:15px;
 }
 
 button{
 padding:10px 20px;
 border:none;
-border-radius:30px;
+border-radius:10px;
 background:#7c3aed;
 color:white;
 cursor:pointer;
-font-weight:bold;
-}
-
-button:disabled{
-opacity:0.4;
 }
 
 .toast{
 position:fixed;
-top:20px;
+bottom:20px;
 right:20px;
-padding:15px 25px;
-border-radius:12px;
+padding:12px 20px;
+border-radius:10px;
 color:white;
 font-weight:bold;
-display:none;
-z-index:999;
 }
-
-.toast.success{background:#10b981;}
-.toast.error{background:#ef4444;}
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
+<div class="quiz">
 <div class="header">
-<h2>🎓 ADVANCED TOEFL QUIZ</h2>
-<p>SALVO GROUP INTERACTIVE SYSTEM</p>
+<h2>🔥 SALVO QUIZ PRO</h2>
+<div class="progress" id="progress"></div>
 </div>
 
-<div class="score-panel">
-<div>Score: <span id="score">0</span></div>
-<div>Question: <span id="number">1</span>/20</div>
+<div class="content">
+<h3 id="question"></h3>
+<div id="options"></div>
+<div id="explanation"></div>
 </div>
-
-<div id="quiz"></div>
 
 <div class="nav">
-<button id="prev">Previous</button>
-<button id="next">Next</button>
+<button onclick="prev()">⬅</button>
+<button onclick="next()">➡</button>
+</div>
 </div>
 
-</div>
-
-<div id="toast" class="toast"></div>
+<audio id="correctSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3"></audio>
+<audio id="wrongSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4c8f3a0d4e.mp3"></audio>
 
 <script>
 
-// SOUND (FIX autoplay issue)
-const correctSound = new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg");
-const wrongSound = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
-
-// FORCE LOAD
-correctSound.load();
-wrongSound.load();
+const correctSound = document.getElementById("correctSound");
+const wrongSound = document.getElementById("wrongSound");
 
 const questions=[
-{
-text:"_____ you had lunch?",
-options:["Have","Has","Did","Do"],
-correct:0,
-exp:"Present Perfect → HAVE + Verb 3. Subject YOU → HAVE."
-},
-{
-text:"What ___ we have to do?",
-options:["do","does","did","are"],
-correct:0,
-exp:"Simple Present question → WE gunakan DO."
-},
-{
-text:"What ______ you happy in the morning?",
-options:["makes","make","made","making"],
-correct:0,
-exp:"WHAT sebagai subject → singular → MAKES."
-},
-{
-text:"How many books ______ Erny buy?",
-options:["did","does","do","is"],
-correct:0,
-exp:"Past question → DID + verb1."
-},
-{
-text:"Is this book __________ by you?",
-options:["written","write","wrote","writing"],
-correct:0,
-exp:"Passive → Verb 3 → WRITTEN."
-}
+
+{q:"___ you had lunch?",o:["Have","Has","Did","Do"],a:0,e:"Present perfect → Have you had"},
+{q:"What ___ we have to do?",o:["do","does","did","are"],a:0,e:"We → do"},
+{q:"What ___ you happy in the morning?",o:["makes","make","made","making"],a:0,e:"Singular → makes"},
+{q:"How many books ___ Erny buy?",o:["did","does","do","is"],a:0,e:"Past → did"},
+{q:"Is this book ___ by you?",o:["written","wrote","write","writing"],a:0,e:"Passive → written"},
+{q:"Your father often ___ to the office at 6 AM",o:["go","goes","went","going"],a:1,e:"He → goes"},
+{q:"___ you so sad last night?",o:["Why were","Why are","Why do","Why did"],a:0,e:"Past → were"},
+{q:"Where ___ her friend studying right now?",o:["is","are","does","did"],a:0,e:"Present continuous"},
+{q:"Where has that thief ___ money?",o:["hidden","hide","hides","hiding"],a:0,e:"Present perfect → hidden"},
+{q:"Where ___ Mr Rizky and Mr Imdar teaching English?",o:["are","is","do","did"],a:0,e:"Plural → are"},
+{q:"Where have those employees been ___ for two hours?",o:["working","work","worked","works"],a:0,e:"Have been → working"},
+{q:"Where ___ Riri always go on Saturday?",o:["does","do","did","is"],a:0,e:"Riri → does"},
+{q:"Where ___ your cousin ___ English so fast?",o:["does-learn","do-learn","did-learn","is-learning"],a:0,e:"Present simple"},
+{q:"Where are you ___?",o:["going","go","went","goes"],a:0,e:"Are → going"},
+{q:"___ your friends usually hang out?",o:["Where do","Where does","Where did","Where are"],a:0,e:"Plural → do"},
+{q:"Where ___ your brother eaten pizza?",o:["has","have","did","is"],a:0,e:"Has eaten"},
+{q:"___ always given money by your father?",o:["Who is","Who are","Who did","Who does"],a:0,e:"Passive → who is"},
+{q:"What ___ you usually do before sleeping?",o:["do","does","did","are"],a:0,e:"You → do"},
+{q:"___ always feel sad with him?",o:["Who","What","Where","When"],a:0,e:"Subject → who"},
+{q:"___ always accompanies you?",o:["Who","What","Where","When"],a:0,e:"Subject → who"}
+
 ];
 
 let current=0;
 let answers=new Array(questions.length).fill(null);
 
-function showToast(msg,type){
-const t=document.getElementById("toast");
+function toast(msg,color){
+document.querySelectorAll(".toast").forEach(t=>t.remove());
+let t=document.createElement("div");
+t.className="toast";
+t.style.background=color;
 t.innerText=msg;
-t.className="toast "+type;
-t.style.display="block";
-setTimeout(()=>t.style.display="none",2000);
-}
-
-function confettiBoom(){
-confetti({particleCount:150,spread:80,origin:{y:0.6}});
+document.body.appendChild(t);
+setTimeout(()=>t.remove(),2000);
 }
 
 function render(){
+let q=questions[current];
+document.getElementById("question").innerText=q.q;
+document.getElementById("progress").innerText=`Soal ${current+1} / ${questions.length}`;
 
-const q=questions[current];
+let box=document.getElementById("options");
+box.innerHTML="";
 
-let html=`<div class="question">${q.text}</div>`;
+q.o.forEach((opt,i)=>{
+let div=document.createElement("div");
+div.className="option";
 
-q.options.forEach((opt,i)=>{
-
-let cls="option";
-
-if(answers[current]!==null){
-if(i===q.correct) cls+=" correct";
-if(i===answers[current] && i!==q.correct) cls+=" wrong";
+if(answers[current]!=null){
+if(i==q.a) div.classList.add("correct");
+if(i==answers[current] && i!=q.a) div.classList.add("wrong");
 }
 
-html+=`<div class="${cls}" onclick="answer(${i})">${String.fromCharCode(65+i)}. ${opt}</div>`;
-});
+div.innerText=opt.replace("-", " ");
 
-if(answers[current]!==null){
-html+=`<div class="explanation">${q.exp}</div>`;
-}
-
-document.getElementById("quiz").innerHTML=html;
-
-document.getElementById("number").innerText=current+1;
-
-updateScore();
-}
-
-function answer(i){
-
-if(answers[current]!==null) return;
+div.onclick=()=>{
+if(answers[current]!=null) return;
 
 answers[current]=i;
 
-if(i===questions[current].correct){
-confettiBoom();
+if(i==q.a){
+confetti({particleCount:80,spread:60});
 correctSound.currentTime=0;
 correctSound.play();
-showToast("✅ BENAR!", "success");
+toast("✅ BENAR","green");
 }else{
 wrongSound.currentTime=0;
 wrongSound.play();
-showToast("❌ SALAH!", "error");
+toast("❌ SALAH","red");
 }
 
 render();
-}
-
-function updateScore(){
-let score=answers.filter((a,i)=>a===questions[i].correct).length;
-document.getElementById("score").innerText=score;
-}
-
-document.getElementById("next").onclick=()=>{
-if(current<questions.length-1){
-current++;
-render();
-}
 };
 
-document.getElementById("prev").onclick=()=>{
-if(current>0){
-current--;
-render();
+box.appendChild(div);
+});
+
+let exp=document.getElementById("explanation");
+
+if(answers[current]!=null){
+exp.innerHTML="<b>Penjelasan:</b> "+q.e;
+}else{
+exp.innerHTML="";
 }
-};
+}
+
+function next(){if(current<questions.length-1){current++;render();}}
+function prev(){if(current>0){current--;render();}}
 
 render();
 
